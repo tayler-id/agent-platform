@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile with Code Editor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css">
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+        }
+        #editor-container {
+            width: 800px;
+            height: 600px;
+            margin: 20px auto;
+            background-color: bisque;
+        }
+    </style>
+</head>
+<body>
+    <h1>Your Profile</h1>
+    <div id="editor-container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/python/python.min.js"></script>
+    <script>
+        var editor = CodeMirror(document.getElementById("editor-container"), {
+            value: "# Your code here",
+            mode:  "python"
+        });
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
