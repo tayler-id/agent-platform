@@ -1,165 +1,238 @@
 # Contributing to Agent Platform
 
-## Getting Started
+Thank you for your interest in contributing to Agent Platform! This document provides guidelines and instructions for contributing.
 
-### Prerequisites
-- Python 3.8+
-- FastAPI
-- smolagents library
-- Node.js (for frontend development)
+## Development Setup
 
-### Development Setup
-1. Clone the repository
-2. Create a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Copy .env.example to .env and configure:
-   ```bash
-   cp .env.example .env
-   ```
+1. Fork the repository
+2. Clone your fork:
+```bash
+git clone https://github.com/your-username/agent-platform.git
+cd agent-platform
+```
 
-## Development Guidelines
+3. Create a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
-### Code Style
-- Follow PEP 8 for Python code
-- Use type hints
-- Document functions and classes
-- Keep functions focused and small
-- Write descriptive variable names
+4. Install development dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-### Architecture
-- Keep the core agent framework modular
-- Separate concerns between layers
-- Use dependency injection
-- Follow REST API best practices
-- Maintain backward compatibility
+5. Set up pre-commit hooks:
+```bash
+pre-commit install
+```
 
-### Testing
-- Write unit tests for new features
-- Include integration tests
-- Test edge cases
-- Maintain test coverage
-- Document test scenarios
+## Development Workflow
 
-### Documentation
-- Update API documentation
-- Include code examples
-- Document configuration options
-- Keep README up to date
-- Add inline comments for complex logic
+1. Create a new branch for your feature:
+```bash
+git checkout -b feature/your-feature-name
+```
 
-## Git Workflow
-
-### Branches
-- `main`: Production-ready code
-- `develop`: Development branch
-- Feature branches: `feature/feature-name`
-- Bug fixes: `fix/bug-name`
-- Releases: `release/version`
-
-### Commits
-- Use clear commit messages
-- Reference issues/tickets
-- Keep commits focused
-- Follow conventional commits format
-
-### Pull Requests
-1. Create feature branch
-2. Implement changes
+2. Make your changes following our coding standards
 3. Write/update tests
-4. Update documentation
-5. Submit PR against develop
-6. Address review comments
-7. Maintain clean commit history
+4. Run the test suite:
+```bash
+python -m pytest
+```
 
-## Tool Development
+5. Commit your changes:
+```bash
+git add .
+git commit -m "feat: add your feature description"
+```
 
-### Creating New Tools
-1. Inherit from BaseTool
-2. Implement required methods
-3. Add type hints and docstrings
-4. Include usage examples
-5. Write comprehensive tests
+6. Push to your fork:
+```bash
+git push origin feature/your-feature-name
+```
 
-### Tool Guidelines
-- Keep tools focused
-- Handle errors gracefully
-- Include input validation
-- Document dependencies
-- Consider performance
-- Follow security best practices
+7. Create a Pull Request
 
-## UI Development
+## Coding Standards
 
-### Design Principles
-- Follow brutalist design
-- Maintain consistency
-- Focus on usability
-- Consider accessibility
-- Support responsive design
+### Python Code Style
 
-### Frontend Guidelines
+- Follow PEP 8 guidelines
+- Use type hints
+- Maximum line length: 88 characters (Black default)
+- Use docstrings for functions and classes
+
+Example:
+```python
+from typing import Optional, List
+
+def process_data(input_data: List[str], max_items: Optional[int] = None) -> dict:
+    """Process input data and return results.
+    
+    Args:
+        input_data: List of strings to process
+        max_items: Optional maximum number of items to process
+        
+    Returns:
+        Dictionary containing processed results
+        
+    Raises:
+        ValueError: If input_data is empty
+    """
+    if not input_data:
+        raise ValueError("Input data cannot be empty")
+    
+    # Implementation
+    return {"result": "processed"}
+```
+
+### SQL Style
+
+- Use lowercase for keywords
+- Use snake_case for names
+- Include comments for complex queries
+- Add appropriate indexes
+
+Example:
+```sql
+-- Create table for storing agent configurations
+create table public.agent_configs (
+    id uuid default uuid_generate_v4() primary key,
+    agent_id uuid references public.agents(id),
+    config_key varchar(50) not null,
+    config_value jsonb not null,
+    created_at timestamptz default now()
+);
+
+-- Index for faster lookups
+create index idx_agent_configs_agent_id on public.agent_configs(agent_id);
+```
+
+### Frontend Style
+
+- Follow brutalist design principles
 - Use semantic HTML
-- Write maintainable CSS
-- Follow JS best practices
-- Optimize performance
-- Handle errors gracefully
+- Keep CSS minimal and functional
+- Maintain responsive design
 
-## Release Process
+Example:
+```html
+<div class="agent-card">
+    <h2 class="agent-name">Agent Name</h2>
+    <div class="agent-stats">
+        <span class="stat">Rating: 4.5</span>
+        <span class="stat">Uses: 1,234</span>
+    </div>
+</div>
+```
 
-### Version Control
-- Follow semantic versioning
-- Update CHANGELOG.md
-- Tag releases
-- Document breaking changes
+```css
+.agent-card {
+    border: 2px solid #000;
+    padding: 1rem;
+    margin: 1rem 0;
+    background: #fff;
+}
 
-### Release Checklist
-1. Update version numbers
-2. Run test suite
-3. Update documentation
-4. Create release notes
-5. Tag release
-6. Deploy to staging
-7. Verify deployment
-8. Deploy to production
+.agent-name {
+    font-family: monospace;
+    font-size: 1.5rem;
+    margin: 0 0 1rem 0;
+}
 
-## Community
+.agent-stats {
+    display: flex;
+    gap: 1rem;
+}
+```
 
-### Communication
-- Use GitHub Issues
-- Join Discord community
-- Follow Code of Conduct
-- Be respectful and inclusive
-- Help other contributors
+## Pull Request Process
 
-### Support
+1. Update documentation for any new features
+2. Add or update tests as needed
+3. Ensure all tests pass
+4. Update the CHANGELOG.md file
+5. Request review from maintainers
+
+### PR Title Format
+
+Use conventional commits format:
+- `feat: add new feature`
+- `fix: resolve bug issue`
+- `docs: update documentation`
+- `test: add tests`
+- `refactor: improve code structure`
+
+### PR Description Template
+
+```markdown
+## Description
+Brief description of changes
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
+
+## Testing
+Describe testing done
+
+## Screenshots (if applicable)
+Add screenshots
+
+## Checklist
+- [ ] Tests added/updated
+- [ ] Documentation updated
+- [ ] CHANGELOG.md updated
+```
+
+## Database Changes
+
+When making database changes:
+
+1. Add migrations to `scripts/setup_supabase.sql`
+2. Update RLS policies as needed
+3. Add appropriate indexes
+4. Test migrations both ways (up/down)
+5. Update documentation
+
+## Testing Guidelines
+
+- Write unit tests for new features
+- Include integration tests for API endpoints
+- Test real-time functionality
+- Verify RLS policies
+- Test error cases
+
+Example test:
+```python
+import pytest
+from httpx import AsyncClient
+
+@pytest.mark.asyncio
+async def test_create_agent():
+    async with AsyncClient() as client:
+        response = await client.post(
+            "/agents",
+            json={
+                "name": "Test Agent",
+                "description": "Test description"
+            }
+        )
+        assert response.status_code == 201
+        data = response.json()
+        assert data["name"] == "Test Agent"
+```
+
+## Getting Help
+
+- Join our Discord server
 - Check existing issues
-- Provide reproduction steps
-- Share relevant logs
-- Be responsive to questions
-- Help with documentation
+- Ask in discussions
+- Contact maintainers
 
-## Security
+## Code of Conduct
 
-### Guidelines
-- Report vulnerabilities privately
-- Follow security best practices
-- Review dependencies
-- Keep dependencies updated
-- Use secure configurations
-
-### Reporting Issues
-1. Check existing issues
-2. Include reproduction steps
-3. Provide environment details
-4. Submit security issues privately
-5. Wait for response
-
-## License
-By contributing, you agree that your contributions will be licensed under the project's license.
+Please note that this project is released with a [Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.

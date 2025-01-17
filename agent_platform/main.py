@@ -1,59 +1,109 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-from agent_platform.routes.agent_routes import router as agent_router
-from agent_platform.core.agent_framework import AgentFramework
-import uvicorn
-import logging
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from dotenv import load_dotenv
 import os
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+from .routes import agent_routes, auth_routes
+from .core.models.database import Database
+
+# Load environment variables
+load_dotenv()
 
 app = FastAPI(
     title="Agent Platform API",
-    description="API for managing AI agents and tools",
-    version="0.1.0"
+    description="API for managing and interacting with AI agents",
+    version="1.0.0"
 )
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # In production, replace with specific origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Add trusted host middleware
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["*"]  # In production, replace with specific hosts
+)
+
 # Include routers
-app.include_router(agent_router, prefix="/api/v1")
-
-# Get the current directory
-current_dir = os.path.dirname(os.path.abspath(__file__))
-
-# Mount static files
-app.mount("/", StaticFiles(directory=current_dir, html=True), name="static")
+app.include_router(auth_routes.router, tags=["Authentication"])
+app.include_router(agent_routes.router, tags=["Agents"])
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize the agent framework"""
-    # Initialize any required services here
-    pass
+    """Initialize services on startup."""
+    # Verify Supabase configuration
+    if not os.getenv("SUPABASE_URL") or not os.getenv("SUPABASE_KEY"):
+        raise HTTPException(
+            status_code=500,
+            detail="Supabase configuration missing. Please check your .env file."
+        )
+    
+    # Test Supabase connection
+    try:
+        # Simple query to verify connection
+        Database.supabase.table('agents').select("*").limit(1).execute()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to connect to Supabase: {str(e)}"
+        )
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Clean up resources on shutdown"""
-    # Clean up any resources here
-    pass
+@app.get("/", tags=["Health"])
+async def health_check():
+    """API health check endpoint."""
+    return {
+        "status": "healthy",
+        "version": "1.0.0",
+        "supabase_connected": True
+    }
+
+@app.get("/api-info", tags=["Documentation"])
+async def api_info():
+    """Get API information and available endpoints."""
+    return {
+        "name": "Agent Platform API",
+        "version": "1.0.0",
+        "description": "API for managing and interacting with AI agents",
+        "documentation": "/docs",  # FastAPI auto-generated docs
+        "redoc": "/redoc",        # Alternative documentation
+        "features": [
+            "User Authentication",
+            "Agent Management",
+            "Real-time Updates",
+            "Rate Limiting",
+            "CORS Support"
+        ],
+        "endpoints": {
+            "auth": [
+                "POST /auth/signup - Register new user",
+                "POST /auth/signin - Authenticate user",
+                "POST /auth/refresh - Refresh access token",
+                "POST /auth/signout - Sign out user",
+                "GET /auth/me - Get current user info"
+            ],
+            "agents": [
+                "POST /agents - Create new agent",
+                "GET /agents - List user's agents",
+                "GET /agents/{id} - Get specific agent",
+                "PATCH /agents/{id} - Update agent",
+                "DELETE /agents/{id} - Delete agent",
+                "WS /ws/agents/{id} - Real-time agent updates"
+            ]
+        }
+    }
 
 if __name__ == "__main__":
+    import uvicorn
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
+        port=int(os.getenv("PORT", 3000)),
+        reload=os.getenv("NODE_ENV") == "development"
     )

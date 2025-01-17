@@ -1,8 +1,29 @@
-fastapi
-uvicorn
-python-dotenv
-pydantic
-httpx
-python-multipart
-loguru
-smolagents
+# Database and API
+supabase==1.0.3
+python-dotenv==1.0.0
+fastapi==0.100.0
+uvicorn==0.23.0
+pydantic==2.0.3
+
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# HTTP client
+httpx==0.24.1
+
+# Utilities
+python-multipart==0.0.6
+email-validator==2.0.0.post2
+
+# Development
+pytest==7.4.0
+pytest-asyncio==0.21.1
+black==23.7.0
+isort==5.12.0
+flake8==6.0.0
+
+# Agent-specific
+langchain==0.0.240
+openai==0.27.8
+anthropic==0.3.6
