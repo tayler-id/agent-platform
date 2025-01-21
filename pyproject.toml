@@ -7,3 +7,14 @@ name = "agent_platform"
 version = "0.1.0"
 description = "A platform for managing and running AI agents"
 requires-python = ">=3.8"
+
+[tool.poetry.scripts]
+start = "agent_platform.main:start"
+test = "pytest agent_platform/tests"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+fastapi = "^0.78.0"
+uvicorn = "^0.17.6"
+sqlalchemy = "^1.4.32"
+pytest = "^7.1.2"

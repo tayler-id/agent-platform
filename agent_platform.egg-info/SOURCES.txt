@@ -1,4 +1,3 @@
-README.md
 pyproject.toml
 setup.py
 agent_platform/__init__.py
@@ -9,8 +8,11 @@ agent_platform.egg-info/dependency_links.txt
 agent_platform.egg-info/top_level.txt
 agent_platform/core/__init__.py
 agent_platform/core/agent_framework.py
+agent_platform/core/auth.py
 agent_platform/core/utils.py
 agent_platform/core/models/__init__.py
 agent_platform/core/models/agent.py
+agent_platform/core/models/database.py
 agent_platform/routes/__init__.py
 agent_platform/routes/agent_routes.py
+agent_platform/routes/auth_routes.py

@@ -1,119 +1,84 @@
-from typing import Dict, List, Optional, Any
-from pydantic import BaseModel, Field
-from enum import Enum
 from datetime import datetime
-from smolagents import CodeAgent
-
-class ListingType(str, Enum):
-    """Types of marketplace listings"""
-    SALE = "sale"
-    RENT = "rent"
-
-class AgentState(str, Enum):
-    """Possible states of an agent"""
-    CREATED = "created"
-    RUNNING = "running"
-    STOPPED = "stopped"
-    ERROR = "error"
+from typing import List, Dict, Optional
+from pydantic import BaseModel
+from sqlalchemy import Column, String, Integer, Float, JSON, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
+from .database import Base
 
 class AgentConfig(BaseModel):
-    """Configuration for creating an agent"""
-    id: str = Field(..., description="Unique identifier for the agent")
-    name: str = Field(..., description="Human-readable name of the agent")
-    description: str = Field(..., description="Description of the agent's purpose")
-    tools: List[str] = Field(default_factory=list, 
-                           description="List of tool names available to this agent")
-    model: str = Field(..., description="Model identifier to use for this agent")
-    allowed_imports: List[str] = Field(default_factory=list,
-                                     description="List of additional allowed imports")
-    metadata: Dict[str, Any] = Field(default_factory=dict,
-                                   description="Additional metadata for the agent")
+    """Configuration for an agent"""
+    name: str
+    description: Optional[str] = None
+    tools: List[str] = []
+    model: str
+    allowed_imports: List[str] = []
+    metadata: Dict[str, str] = {}
 
-class MarketplaceListing(BaseModel):
-    """Represents a marketplace listing"""
-    id: str = Field(..., description="Unique identifier for the listing")
-    agent_id: str = Field(..., description="ID of the agent being listed")
-    type: ListingType = Field(..., description="Type of listing (sale/rent)")
-    price: float = Field(..., description="Price of the listing")
-    created_at: datetime = Field(default_factory=datetime.now)
-    seller_id: Optional[str] = Field(None, description="ID of the seller")
-    duration: Optional[int] = Field(None, description="Duration in days for rental listings")
+class AgentState(BaseModel):
+    """Current state of an agent"""
+    status: str
+    last_updated: datetime
 
 class AgentStats(BaseModel):
-    """Runtime statistics for an agent"""
-    # Performance metrics
-    total_requests: int = 0
-    successful_requests: int = 0
-    failed_requests: int = 0
-    average_response_time: float = 0.0
-    last_error: Optional[str] = None
-    
-    # Gamification metrics
-    rating: float = Field(default=0.0, description="Average rating (0-5)")
-    total_ratings: int = Field(default=0, description="Number of ratings received")
-    earnings: float = Field(default=0.0, description="Total earnings from marketplace")
-    tasks_completed: int = Field(default=0, description="Total tasks completed")
-    level: int = Field(default=1, description="Agent's experience level")
-    experience_points: int = Field(default=0, description="Points earned from tasks")
-    achievements: List[str] = Field(default_factory=list, description="List of earned achievements")
-    
-    # Marketplace metrics
-    times_purchased: int = Field(default=0, description="Number of times purchased")
-    times_rented: int = Field(default=0, description="Number of times rented")
-    current_owner: Optional[str] = Field(None, description="ID of current owner")
-    marketplace_status: Optional[str] = Field(None, description="Current marketplace status")
-
-class AgentRating(BaseModel):
-    """Represents a rating given to an agent"""
-    id: str = Field(..., description="Unique identifier for the rating")
-    agent_id: str = Field(..., description="ID of the rated agent")
-    rater_id: str = Field(..., description="ID of the user who rated")
-    rating: float = Field(..., description="Rating value (0-5)")
-    comment: Optional[str] = Field(None, description="Optional comment")
-    created_at: datetime = Field(default_factory=datetime.now)
+    """Statistics for an agent"""
+    tasks_completed: int = 0
+    earnings: float = 0.0
+    rating: float = 0.0
+    last_active: Optional[datetime] = None
 
 class Agent(BaseModel):
-    """Represents an agent instance"""
+    """Business logic model for an agent"""
     id: str
     config: AgentConfig
-    instance: CodeAgent
-    state: AgentState = AgentState.CREATED
-    stats: AgentStats = Field(default_factory=AgentStats)
-    created_at: datetime = Field(default_factory=datetime.now)
-    last_active: Optional[datetime] = None
-    owner_id: Optional[str] = None
-    
-    def update_stats(self, successful: bool, response_time: float):
-        """Update agent statistics after a request"""
-        self.stats.total_requests += 1
-        if successful:
-            self.stats.successful_requests += 1
-            self.stats.tasks_completed += 1
-            self.stats.experience_points += 10
-            
-            # Level up logic
-            level_threshold = self.stats.level * 100
-            if self.stats.experience_points >= level_threshold:
-                self.stats.level += 1
-                self.stats.achievements.append(f"Reached Level {self.stats.level}")
-        else:
-            self.stats.failed_requests += 1
-        
-        # Update average response time
-        total_requests = self.stats.successful_requests + self.stats.failed_requests
-        self.stats.average_response_time = (
-            (self.stats.average_response_time * (total_requests - 1) + response_time) 
-            / total_requests
-        )
-        self.last_active = datetime.now()
-    
-    def add_rating(self, rating: float):
-        """Add a new rating for the agent"""
-        self.stats.total_ratings += 1
-        self.stats.rating = (
-            (self.stats.rating * (self.stats.total_ratings - 1) + rating)
-            / self.stats.total_ratings
-        )
-    
-    class Config:
-        arbitrary_types_allowed = True
+    state: AgentState
+    stats: AgentStats
+    owner_id: str
+    created_at: datetime
+    updated_at: datetime
+
+class DBAgent(Base):
+    """Database model for agents"""
+    __tablename__ = "agents"
+
+    id = Column(String, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(String)
+    owner_id = Column(String, ForeignKey("users.id"), nullable=False)
+    tools = Column(JSON, default=list)
+    model = Column(String, nullable=False)
+    allowed_imports = Column(JSON, default=list)
+    agent_metadata = Column(JSON, default=dict)
+    created_at = Column(DateTime, nullable=False)
+    updated_at = Column(DateTime, nullable=False)
+
+    # Relationships
+    owner = relationship("DBUser", back_populates="agents")
+    listings = relationship("DBListing", back_populates="agent")
+    rentals = relationship("DBRental", back_populates="agent")
+    stats = relationship("DBAgentStats", uselist=False, back_populates="agent")
+
+class DBAgentStats(Base):
+    """Database model for agent statistics"""
+    __tablename__ = "agent_stats"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    agent_id = Column(String, ForeignKey("agents.id"), unique=True)
+    tasks_completed = Column(Integer, default=0)
+    earnings = Column(Float, default=0.0)
+    rating = Column(Float, default=0.0)
+    last_active = Column(DateTime)
+
+    # Relationships
+    agent = relationship("DBAgent", back_populates="stats")
+
+class DBAgentState(Base):
+    """Database model for agent state"""
+    __tablename__ = "agent_states"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    agent_id = Column(String, ForeignKey("agents.id"), unique=True)
+    state = Column(String, nullable=False)
+    last_updated = Column(DateTime, nullable=False)
+
+    # Relationships
+    agent = relationship("DBAgent")

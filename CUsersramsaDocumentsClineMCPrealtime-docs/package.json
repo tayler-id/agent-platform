@@ -1,0 +1,9 @@
+{
+  "description": "",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.1.1",
+    "chokidar": "^4.0.3",
+    "git-commit-msg-linter": "^5.0.8",
+    "prettier": "^3.4.2"
+  }
+}
