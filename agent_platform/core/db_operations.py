@@ -8,14 +8,18 @@ class DBOperations:
     """Handles all database operations for agent persistence"""
     
     @staticmethod
-    def create_agent(db: Session, config: dict) -> Agent:
-        """Create and persist a new agent"""
+    def create_agent(db: Session, agent_data: dict) -> Agent:
+        """Create a new agent with validation and related records"""
+        required_fields = ['name', 'model', 'owner_id']
+        if not all(field in agent_data for field in required_fields):
+            raise ValueError(f"Missing required fields: {required_fields}")
+
         agent_config = AgentConfig(
-            name=config["name"],
-            description=config.get("description", ""),
-            tools=config.get("tools", []),
-            model=config["model"],
-            allowed_imports=config.get("allowed_imports", [])
+            name=agent_data["name"],
+            description=agent_data.get("description", ""),
+            tools=agent_data.get("tools", []),
+            model=agent_data["model"],
+            allowed_imports=agent_data.get("allowed_imports", [])
         )
         
         agent_state = AgentState(status="idle")
@@ -25,7 +29,7 @@ class DBOperations:
             config=agent_config,
             state=agent_state,
             stats=agent_stats,
-            owner_id=config["owner_id"]
+            owner_id=agent_data["owner_id"]
         )
         
         db.add(agent)
@@ -58,12 +62,29 @@ class DBOperations:
     def delete_agent(db: Session, agent_id: int) -> None:
         """Delete an agent and related records"""
         agent = db.query(Agent).filter(Agent.id == agent_id).first()
-        if agent:
-            db.delete(agent.config)
-            db.delete(agent.state)
-            db.delete(agent.stats)
-            db.delete(agent)
-            db.commit()
+        if not agent:
+            raise ValueError("Agent not found")
+            
+        db.delete(agent.config)
+        db.delete(agent.state)
+        db.delete(agent.stats)
+        db.delete(agent)
+        db.commit()
+
+
+    @staticmethod
+    def update_agent(db: Session, agent_id: int, update_data: dict) -> Agent:
+        """Update existing agent with partial data"""
+        agent = db.query(Agent).filter(Agent.id == agent_id).first()
+        if not agent:
+            raise ValueError("Agent not found")
+
+        for key, value in update_data.items():
+            setattr(agent, key, value)
+            
+        db.commit()
+        db.refresh(agent)
+        return agent
 
     @staticmethod
     def get_user_by_username(db: Session, username: str) -> Optional[User]:

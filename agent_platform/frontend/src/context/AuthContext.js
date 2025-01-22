@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
 
 const AuthContext = createContext();
 
@@ -9,85 +9,88 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Check for existing session on mount
+  // Check existing session on mount
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkSession = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (token) {
-          const response = await axios.get('/api/auth/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          setUser(response.data);
-        }
+        const response = await api.auth.getSession();
+        setUser(response.data.user ?? null);
       } catch (error) {
-        localStorage.removeItem('token');
+        setUser(null);
       } finally {
         setLoading(false);
       }
     };
 
-    checkAuth();
+    checkSession();
   }, []);
 
-  const signIn = async (username, password, totpCode) => {
+  const signIn = async (email, password) => {
     try {
-      const response = await axios.post('/api/auth/login', {
-        username,
-        password,
-        totp_code: totpCode
-      });
-
-      if (response.data.requires2FA) {
-        return { requires2FA: true, user: response.data.user };
-      }
-
-      localStorage.setItem('token', response.data.access_token);
+      const response = await api.auth.login({ email, password });
       setUser(response.data.user);
-      return { user: response.data.user };
+      return response.data;
     } catch (error) {
-      throw error.response?.data?.message || 'Login failed';
+      throw error.response?.data?.message || error.message;
+    }
+  };
+
+  const signUp = async (email, password, metadata = {}) => {
+    try {
+      const response = await api.auth.register({ 
+        email, 
+        password,
+        metadata 
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.message || error.message;
     }
   };
 
   const signOut = async () => {
-    localStorage.removeItem('token');
-    setUser(null);
-    navigate('/login');
+    try {
+      await api.auth.logout();
+      setUser(null);
+      navigate('/');
+    } catch (error) {
+      throw error.response?.data?.message || error.message;
+    }
   };
 
-  const signUp = async (username, email, password) => {
+  const resetPassword = async (email) => {
     try {
-      await axios.post('/api/auth/register', {
-        username,
-        email,
-        password
-      });
-      return true;
+      const response = await api.auth.resetPassword({ email });
+      return response.data;
     } catch (error) {
-      throw error.response?.data?.message || 'Registration failed';
+      throw error.response?.data?.message || error.message;
     }
   };
 
   const get2FASecret = async () => {
     try {
-      const response = await axios.get('/api/auth/2fa/generate-secret', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      return response.data.secret;
+      const response = await api.auth.generate2FASecret();
+      return response.data;
     } catch (error) {
-      throw error.response?.data?.message || 'Failed to generate 2FA secret';
+      throw error.response?.data?.message || error.message;
     }
   };
 
-  const enable2FA = async (code) => {
+  const enable2FA = async (data) => {
     try {
-      await axios.post('/api/auth/2fa/enable', { code }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      return true;
+      await api.auth.enable2FA(data);
     } catch (error) {
-      throw error.response?.data?.message || 'Failed to enable 2FA';
+      throw error.response?.data?.message || error.message;
+    }
+  };
+
+  const updateProfile = async (updates) => {
+    try {
+      const response = await api.gamification.updateProfile(updates);
+      setUser(response.data);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.message || error.message;
     }
   };
 
@@ -97,8 +100,10 @@ export const AuthProvider = ({ children }) => {
     signIn,
     signOut,
     signUp,
+    resetPassword,
     get2FASecret,
-    enable2FA
+    enable2FA,
+    updateProfile
   };
 
   return (

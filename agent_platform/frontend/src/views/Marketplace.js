@@ -128,35 +128,58 @@ const Marketplace = () => {
 
         <div className="grid grid-3">
           {paginatedData.map(agent => (
-            <div key={agent.id} className="card">
-              {agent.rating >= 4.8 && (
-                <div className="card-badge">Top Agent</div>
-              )}
-              <img src={agent.image} alt={agent.name} />
-              <h2>{agent.name}</h2>
-              <p>{agent.description}</p>
-              
-              <div className="card-rating">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <span 
-                    key={star}
-                    className={star <= Math.round(agent.rating) ? 'active' : ''}
-                  />
-                ))}
+            <div key={agent.id} className="brutalist-card">
+              <div className="card-header">
+                <h2 className="brutalist-title">{agent.name}</h2>
+                <div className="trust-badge" style={{backgroundColor: `hsl(${agent.trust_score}, 80%, 50%)`}}>
+                  {agent.trust_score.toFixed(1)}%
+                </div>
               </div>
               
-              <div className="card-capabilities">
-                {agent.tags.map(tag => (
-                  <div key={tag} className="card-capability">
-                    {tag}
+              <div className="brutalist-content">
+                <p className="brutalist-description">{agent.description}</p>
+                
+                <div className="brutalist-stats">
+                  <div className="stat-item">
+                    <span className="stat-label">USED</span>
+                    <span className="stat-value">{agent.usage_count}+</span>
                   </div>
-                ))}
+                  <div className="stat-item">
+                    <span className="stat-label">RATING</span>
+                    <span className="stat-value">{agent.rating}/5</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">PRICE</span>
+                    <span className="stat-value brutalist-price">
+                      {agent.price_model === 'free' ? 'FREE' : `$${agent.price.toFixed(2)}`}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="trust-bar">
+                  <div 
+                    className="trust-progress" 
+                    style={{width: `${agent.trust_score}%`}}
+                  />
+                </div>
+
+                <div className="brutalist-tags">
+                  {agent.tags.map(tag => (
+                    <div key={tag} className="brutalist-tag">
+                      #{tag}
+                    </div>
+                  ))}
+                  <div className={`price-badge ${agent.price_model}`}>
+                    {agent.price_model.toUpperCase()}
+                  </div>
+                </div>
               </div>
-              
-              <div className="agent-meta">
-                <span>${agent.price.toFixed(2)}</span>
-                <button>View Details</button>
-              </div>
+
+              <button className="brutalist-button">
+                {agent.price_model === 'rental' ? 'RENT NOW' : 
+                 agent.price_model === 'purchase' ? 'BUY LICENSE' : 
+                 'GET STARTED'}
+              </button>
             </div>
           ))}
         </div>

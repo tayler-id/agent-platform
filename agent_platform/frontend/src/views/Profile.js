@@ -1,67 +1,113 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
+import { toast } from 'react-toastify';
 
 const Profile = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [userData, setUserData] = useState({
-    username: 'johndoe',
-    email: 'john@example.com',
-    bio: 'AI enthusiast and agent developer',
+    username: '',
+    email: '',
+    bio: '',
+    avatarUrl: '',
     createdAgents: [],
     purchasedAgents: []
   });
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [formData, setFormData] = useState({
+    username: '',
+    bio: ''
+  });
 
-  // TODO: Replace with actual API call
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProfileData = async () => {
       try {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 500));
+        setIsLoading(true);
+        const response = await api.gamification.getUserStats();
+        const profileResponse = await api.gamification.getProfile();
         
-        // Simulate fetched data
-        const data = {
-          username: 'johndoe',
-          email: 'john@example.com',
-          bio: 'AI enthusiast and agent developer',
-          createdAgents: [
-            {
-              id: '1',
-              name: 'Marketing Automator',
-              description: 'Automates social media posting',
-              rating: 4.5,
-              price: 49.99
-            },
-            {
-              id: '2',
-              name: 'Code Reviewer',
-              description: 'Automated code review assistant',
-              rating: 4.2,
-              price: 99.99
-            }
-          ],
-          purchasedAgents: [
-            {
-              id: '3',
-              name: 'SEO Optimizer',
-              description: 'Automated SEO analysis',
-              rating: 4.7,
-              price: 79.99
-            }
-          ]
-        };
+        setUserData({
+          ...profileResponse.data,
+          createdAgents: response.data.createdAgents || [],
+          purchasedAgents: response.data.purchasedAgents || []
+        });
         
-        setUserData(data);
+        setFormData({
+          username: profileResponse.data.username,
+          bio: profileResponse.data.bio
+        });
       } catch (error) {
+        toast.error('Failed to load profile data');
         console.error('Error fetching profile data:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchData();
+    fetchProfileData();
   }, []);
 
   const handleEditProfile = () => {
-    // TODO: Implement profile editing
-    console.log('Edit profile clicked');
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setFormData({
+      username: userData.username,
+      bio: userData.bio
+    });
+  };
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      setIsLoading(true);
+      const response = await api.gamification.updateAvatar(file);
+      setUserData(prev => ({
+        ...prev,
+        avatarUrl: response.data.avatarUrl
+      }));
+      toast.success('Avatar updated successfully');
+    } catch (error) {
+      toast.error('Failed to update avatar');
+      console.error('Error updating avatar:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      setIsLoading(true);
+      await api.gamification.updateProfile(formData);
+      
+      setUserData(prev => ({
+        ...prev,
+        username: formData.username,
+        bio: formData.bio
+      }));
+      
+      setIsEditing(false);
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      toast.error('Failed to update profile');
+      console.error('Error updating profile:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleViewAgent = (agentId) => {
@@ -79,17 +125,80 @@ const Profile = () => {
         
         <div className="profile-header">
           <div className="profile-info">
-            <h2>{userData.username}</h2>
-            <p>{userData.email}</p>
-            <p>{userData.bio}</p>
+            <div className="avatar-container">
+              <img 
+                src={userData.avatarUrl || '/default-avatar.png'} 
+                alt="Profile Avatar"
+                className="profile-avatar"
+                onClick={() => fileInputRef.current.click()}
+              />
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{display: 'none'}}
+                accept="image/*"
+                onChange={handleAvatarUpload}
+              />
+            </div>
+            <div className="profile-details">
+              <h2>{userData.username}</h2>
+              <p>{userData.email}</p>
+              <p>{userData.bio}</p>
+            </div>
           </div>
-          <button 
-            className="primary"
-            onClick={handleEditProfile}
-          >
-            Edit Profile
-          </button>
+          <div className="profile-actions">
+            <button 
+              className="primary"
+              onClick={handleEditProfile}
+            >
+              Edit Profile
+            </button>
+          </div>
         </div>
+
+        {isEditing && (
+          <div className="edit-modal">
+            <div className="card">
+              <h2>Edit Profile</h2>
+              <div className="form-group">
+                <label>Username</label>
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="form-group">
+                <label>Bio</label>
+                <textarea
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
+                  rows="4"
+                />
+              </div>
+              <div className="form-actions">
+                <button
+                  className="secondary"
+                  onClick={handleCancelEdit}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="primary"
+                  onClick={handleSaveProfile}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="profile-sections">
           <section className="profile-section">

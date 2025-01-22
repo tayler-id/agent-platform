@@ -39,9 +39,9 @@ function App() {
   }
   return (
     <div className="brutalist-container">
-      <AuthProvider supabase={supabase}>
-        <Tour />
-        <Router>
+      <Router>
+        <AuthProvider supabase={supabase}>
+          <Tour />
           <nav className="brutalist-nav">
             <a href="/">Home</a>
             <a href="/marketplace">Marketplace</a>
@@ -57,8 +57,8 @@ function App() {
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/auth" element={<Auth />} />
           </Routes>
-        </Router>
-      </AuthProvider>
+        </AuthProvider>
+      </Router>
     </div>
   );
 }

@@ -273,6 +273,14 @@ class AgentFramework:
             category="tasks"
         )
         self._add_leaderboard_entry("tasks", tasks_entry)
+        
+        # Update performance leaderboard
+        performance_entry = LeaderboardEntry(
+            agent_id=agent_id,
+            score=agent.stats.tasks_completed,
+            category="performance"
+        )
+        self._add_leaderboard_entry("performance", performance_entry)
     
     def _add_leaderboard_entry(self, category: str, entry: LeaderboardEntry):
         """Add an entry to a specific leaderboard category"""

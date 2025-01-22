@@ -1,26 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
 
 const Home = () => {
-  const featuredAgents = [
-    {
-      id: 1,
-      name: 'Marketing Genius',
-      description: 'AI-powered marketing strategist',
-      rating: 4.8
-    },
-    {
-      id: 2, 
-      name: 'Code Wizard',
-      description: 'Full-stack development assistant',
-      rating: 4.9
-    },
-    {
-      id: 3,
-      name: 'Data Scientist',
-      description: 'Advanced analytics and ML expert',
-      rating: 4.7
-    }
-  ];
+  const [featuredAgents, setFeaturedAgents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchFeaturedAgents = async () => {
+      try {
+        const response = await api.agents.listAgents();
+        setFeaturedAgents(response.data.slice(0, 3)); // Get top 3 agents
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeaturedAgents();
+  }, []);
 
   return (
     <div className="grid">
@@ -31,26 +32,34 @@ const Home = () => {
           Discover, share, and monetize AI agents. Build the future of intelligent automation.
         </p>
         <div className="grid grid-2">
-          <button>Explore Marketplace</button>
-          <button>Create Your Agent</button>
+          <button onClick={() => navigate('/marketplace')}>Explore Marketplace</button>
+          <button onClick={() => navigate('/create-agent')}>Create Your Agent</button>
         </div>
       </section>
 
       {/* Featured Agents */}
       <section className="card">
         <h2>Featured Agents</h2>
-        <div className="grid grid-3">
-          {featuredAgents.map(agent => (
-            <div key={agent.id} className="card">
-              <h3>{agent.name}</h3>
-              <p>{agent.description}</p>
-              <div>
-                Rating: {agent.rating}
+        {loading ? (
+          <div>Loading featured agents...</div>
+        ) : error ? (
+          <div className="error">Error loading agents: {error}</div>
+        ) : (
+          <div className="grid grid-3">
+            {featuredAgents.map(agent => (
+              <div key={agent.id} className="card">
+                <h3>{agent.name}</h3>
+                <p>{agent.description}</p>
+                <div>
+                  Rating: {agent.rating || 'No ratings yet'}
+                </div>
+                <button onClick={() => navigate(`/agents/${agent.id}`)}>
+                  View Details
+                </button>
               </div>
-              <button>View Details</button>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Call to Action */}
@@ -60,12 +69,12 @@ const Home = () => {
           <div>
             <h3>For Developers</h3>
             <p>Monetize your AI creations and reach a global audience.</p>
-            <button>Start Building</button>
+            <button onClick={() => navigate('/create-agent')}>Start Building</button>
           </div>
           <div>
             <h3>For Businesses</h3>
             <p>Find the perfect AI solutions for your needs.</p>
-            <button>Explore Solutions</button>
+            <button onClick={() => navigate('/marketplace')}>Explore Solutions</button>
           </div>
         </div>
       </section>

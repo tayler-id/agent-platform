@@ -1,0 +1,189 @@
+.brutalist-container {
+  padding: 2rem;
+  background: #fff;
+  border: 4px solid #000;
+  margin: 2rem;
+}
+
+.brutalist-form {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: #f0f0f0;
+  border: 4px solid #000;
+}
+
+.brutalist-title {
+  font-size: 2.5rem;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+  color: #000;
+  text-align: center;
+  letter-spacing: 0.1em;
+}
+
+.brutalist-form-content {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.brutalist-error {
+  padding: 1rem;
+  background: #ff0000;
+  color: #fff;
+  border: 3px solid #000;
+  font-weight: bold;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 1rem;
+  letter-spacing: 0.05em;
+}
+
+.brutalist-form-group {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.brutalist-label {
+  font-size: 1.1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: #000;
+}
+
+.brutalist-input,
+.brutalist-textarea,
+.brutalist-select {
+  width: 100%;
+  padding: 0.8rem;
+  border: 3px solid #000;
+  background: #fff;
+  font-size: 1rem;
+  color: #000;
+  outline: none;
+}
+
+.brutalist-input:focus,
+.brutalist-textarea:focus,
+.brutalist-select:focus {
+  border-color: #666;
+}
+
+.brutalist-textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.brutalist-form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.brutalist-button {
+  padding: 1rem 2rem;
+  border: 3px solid #000;
+  background: #fff;
+  font-size: 1rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+}
+
+.brutalist-button.primary {
+  background: #000;
+  color: #fff;
+}
+
+.brutalist-button.secondary {
+  background: #fff;
+  color: #000;
+}
+
+.brutalist-button:hover:not(:disabled) {
+  background: #666;
+  border-color: #666;
+  color: #fff;
+}
+
+.brutalist-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.brutalist-button.primary:hover {
+  background: #333;
+}
+
+.brutalist-button.secondary:hover {
+  background: #f0f0f0;
+  color: #000;
+}
+
+.brutalist-checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.brutalist-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.brutalist-checkbox-label input {
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 3px solid #000;
+  appearance: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.brutalist-checkbox-label input:checked {
+  background: #000;
+}
+
+.brutalist-checkbox-label input:checked::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.6rem;
+  height: 0.6rem;
+  background: #fff;
+  transform: translate(-50%, -50%);
+}
+
+.brutalist-preview {
+  margin-top: 1rem;
+  border: 3px solid #000;
+  padding: 1rem;
+  background: #fff;
+}
+
+.brutalist-preview-image {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  border: 3px solid #000;
+}
+
+@media (max-width: 768px) {
+  .brutalist-checkbox-group {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+  
+  .brutalist-form-actions {
+    flex-direction: column;
+  }
+}

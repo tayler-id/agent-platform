@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -8,14 +11,17 @@ import os
 from datetime import datetime
 
 from agent_platform.core.agent_framework import AgentFramework
-from core.models.marketplace import ListingType, RentalDuration, PricingModel
-from core.models.gamification import AchievementType, BadgeRarity
-from core.auth import get_current_user
-from core.models.database import Base, engine
+from agent_platform.core.models.marketplace import ListingType, RentalDuration, PricingModel
+from agent_platform.core.models.gamification import AchievementType, BadgeRarity
+from agent_platform.core.auth import get_current_user, router as auth_router
+from agent_platform.core.models.database import Base, engine
 
 # Initialize FastAPI app and framework
 app = FastAPI(title="Agent Platform API")
 framework = AgentFramework()
+
+# Include auth routes
+app.include_router(auth_router)
 
 # Initialize database tables
 Base.metadata.create_all(bind=engine)
@@ -68,6 +74,11 @@ class UserStats(BaseModel):
     total_points: int
     level: int
     stats: Dict[str, float]
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+    totp_enabled: Optional[bool] = None
 
 # Agent routes
 @app.get("/api/v1/agents")
@@ -174,6 +185,29 @@ async def get_leaderboard(category: str):
 @app.get("/api/v1/achievements")
 async def get_achievements():
     return {id: achievement.to_dict() for id, achievement in ACHIEVEMENTS.items()}
+
+@app.patch("/api/v1/users/me")
+async def update_user_profile(
+    update: UserUpdate,
+    user=Depends(get_current_user)
+):
+    """Update user profile information"""
+    db_user = framework.get_user(user.id)
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if update.username:
+        db_user.username = update.username
+    if update.email:
+        db_user.email = update.email
+    if update.totp_enabled is not None:
+        if update.totp_enabled:
+            db_user.enable_2fa()
+        else:
+            db_user.disable_2fa()
+    
+    framework.update_user(db_user)
+    return {"status": "success", "message": "Profile updated"}
 
 # Mount static files after API routes
 app.mount("/", StaticFiles(directory="c:/Users/ramsa/Documents/my_smol_project/agent_platform", html=True), name="static")

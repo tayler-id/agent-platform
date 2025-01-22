@@ -48,6 +48,11 @@ class DBAgent(Base):
     model = Column(String, nullable=False)
     allowed_imports = Column(JSON, default=list)
     agent_metadata = Column(JSON, default=dict)
+    price_model = Column(String, nullable=False, default="free")  # free, rental, purchase
+    price = Column(Float, default=0.0)
+    is_listed = Column(Integer, default=0)  # 0=private, 1=public
+    trust_score = Column(Float, default=100.0)
+    usage_count = Column(Integer, default=0)
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime, nullable=False)
 
